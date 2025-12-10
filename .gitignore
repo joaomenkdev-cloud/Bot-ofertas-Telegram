@@ -1,0 +1,46 @@
+# ===============================================
+# Python / Dependências / Ambientes Virtuais
+# ===============================================
+# Diretórios de ambiente virtual
+venv/
+.venv/
+env/
+
+# Byte-code Python e Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Pacotes e Distribuição
+*.egg-info
+build/
+dist/
+
+# ===============================================
+# Configurações Locais e Dados Sensíveis
+# ===============================================
+# Variáveis de ambiente (Onde você deveria colocar o BOT_TOKEN e credenciais do MySQL)
+.env
+
+# Arquivos de log e logs do navegador (gerados pelo Selenium e pelo bot)
+*.log
+geckodriver.log
+chromedriver.log
+output.log
+data/
+
+# ===============================================
+# Arquivos do Sistema e IDE
+# ===============================================
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# JetBrains / Pycharm
+.idea/
+
+# VS Code
+.vscode/
