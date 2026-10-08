@@ -4,7 +4,7 @@ import pytest
 
 from ofertas import affiliates
 from ofertas.config import SCRAPING_TARGETS
-from ofertas.scraper import full_size_ml_image, parse_listing
+from ofertas.scraper import find_next_page_url, full_size_ml_image, parse_listing
 
 FIXTURE = Path(__file__).parent / "fixtures" / "listagem_ml.html"
 PAGE_URL = "https://lista.mercadolivre.com.br/informatica/_DisplayType_LF_NoIndex_True"
@@ -60,3 +60,22 @@ def test_imagem_grande_em_jpeg(offers):
 def test_imagem_fora_do_mlstatic_nao_muda():
     url = "https://outra-cdn.com/foto.webp"
     assert full_size_ml_image(url) == url
+
+
+def test_proxima_pagina_vem_do_botao_seguinte():
+    html = FIXTURE.read_text(encoding="utf-8")
+    assert find_next_page_url(html, PAGE_URL) == (
+        "https://lista.mercadolivre.com.br/informatica/_Desde_49_DisplayType_LF_NoIndex_True"
+    )
+
+
+def test_ultima_pagina_nao_tem_proxima():
+    html = """
+    <ul>
+      <li class="andes-pagination__button andes-pagination__button--next andes-pagination__button--disabled">
+        <a href="#">Seguinte</a>
+      </li>
+    </ul>
+    """
+    assert find_next_page_url(html, PAGE_URL) is None
+    assert find_next_page_url("<html></html>", PAGE_URL) is None

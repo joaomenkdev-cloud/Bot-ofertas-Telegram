@@ -22,54 +22,56 @@ ML_IMAGE_ID = re.compile(r"(\d+-[A-Z]+\d+_\d+)-")
 # WEB SCRAPING COM SELENIUM
 # ═════════════════════════════════════════════════════════════════════════════
 
-async def scrape_offers_with_selenium(target_site, max_pages=5):
-    """Busca ofertas em múltiplas páginas"""
+async def iter_listing_pages(target_site, max_pages=5):
+    """
+    Percorre a listagem página por página, devolvendo as ofertas de cada uma.
+    Segue o botão "Seguinte" da própria página: o ML pagina com _Desde_N nas
+    listagens e com ?page=N em outras, então montar a URL na mão não funciona.
+    """
     print(f"🔍 Iniciando scraping em: {target_site['name']}")
-    all_offers = []
-    
+    url = target_site['url']
+
     for page_num in range(1, max_pages + 1):
-        url = target_site['url']
-        
-        # Adiciona número da página na URL
-        if 'page=' in url:
-            url = re.sub(r'page=\d+', f'page={page_num}', url)
-        elif '?' in url:
-            url = f"{url}&page={page_num}"
-        else:
-            url = f"{url}?page={page_num}"
-        
         print(f"📄 Página {page_num}/{max_pages}")
-        
-        offers = await asyncio.to_thread(scrape_offers_sync, target_site, url)
-        
-        if not offers:
-            print(f"⚠️ Nenhuma oferta encontrada, parando busca.")
+
+        offers, next_url = await asyncio.to_thread(scrape_offers_sync, target_site, url)
+
+        if offers:
+            print(f"✅ {len(offers)} ofertas extraídas")
+            yield offers
+        else:
+            print(f"⚠️ Nenhuma oferta nesta página")
+
+        if not next_url:
+            print(f"ℹ️ Não há próxima página")
             break
-        
-        all_offers.extend(offers)
-        print(f"✅ {len(offers)} ofertas extraídas")
-        
-        if len(all_offers) >= 50:
-            print(f"✅ Limite de 50 ofertas atingido")
-            break
-        
+
+        url = next_url
         await asyncio.sleep(2)
-    
-    return all_offers
 
 def scrape_offers_sync(target_site, url):
-    """Função síncrona de scraping"""
+    """Função síncrona de scraping: devolve (ofertas, URL da próxima página)"""
     try:
         page_source = fetch_page_html(url)
     except Exception as e:
         print(f"❌ Erro no scraping: {e}")
         import traceback
         traceback.print_exc()
-        return []
-    
+        return [], None
+
     offers = parse_listing(page_source, target_site, url)
     print(f"📊 Total extraídas: {len(offers)}")
-    return offers
+    return offers, find_next_page_url(page_source, url)
+
+def find_next_page_url(page_source, url):
+    """Lê o link do botão "Seguinte" da paginação (None na última página)"""
+    soup = BeautifulSoup(page_source, 'lxml')
+    next_link = soup.select_one(
+        'li.andes-pagination__button--next:not(.andes-pagination__button--disabled) a[href]'
+    )
+    if next_link is None:
+        return None
+    return urljoin(url, next_link['href'])
 
 def fetch_page_html(url):
     """Abre a página no Chrome e devolve o HTML renderizado"""

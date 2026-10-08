@@ -1,6 +1,7 @@
 """Rotinas agendadas: buscar ofertas, abastecer a fila e enviar."""
 
 import asyncio
+from contextlib import aclosing
 from datetime import datetime
 
 from telegram.ext import ContextTypes
@@ -15,95 +16,96 @@ from .database import (
     save_sent_offer,
 )
 from .scheduling import get_offers_per_hour
-from .scraper import scrape_offers_with_selenium
+from .scraper import iter_listing_pages
 from .sender import send_offer_to_group
 
 # ═════════════════════════════════════════════════════════════════════════════
 # LÓGICA PRINCIPAL
 # ═════════════════════════════════════════════════════════════════════════════
 
+# Quantas páginas de cada fonte olhar por busca e quantas ofertas novas
+# bastam para parar de paginar
+MAX_PAGES = 5
+NEW_OFFERS_WANTED = 20
+
+async def collect_new_offers(target):
+    """Percorre as páginas da fonte e junta as ofertas que ainda não foram enviadas"""
+    new_offers = []
+    seen_hashes = set()
+
+    async with aclosing(iter_listing_pages(target, max_pages=MAX_PAGES)) as pages:
+        async for offers in pages:
+            new_in_page = 0
+            for offer in offers:
+                offer_hash = generate_offer_hash(offer['title'], offer['link'])
+                if offer_hash in seen_hashes or is_offer_already_sent(offer_hash):
+                    continue
+                seen_hashes.add(offer_hash)
+                new_offers.append(offer)
+                new_in_page += 1
+
+            print(f"  📊 Página: {len(offers)} ofertas, {new_in_page} novas")
+
+            if len(new_offers) >= NEW_OFFERS_WANTED:
+                break
+
+    return new_offers
+
 async def find_and_manage_offers(context: ContextTypes.DEFAULT_TYPE):
     """Busca ofertas e gerencia a fila"""
     print("\n" + "="*60)
     print(f"🔍 Buscando ofertas - {datetime.now().strftime('%H:%M:%S')}")
     print("="*60 + "\n")
-    
+
     total_new_offers = 0
-    
+
     for target in SCRAPING_TARGETS:
         print(f"\n{'='*60}")
         print(f"📍 FONTE: {target['name']}")
         print(f"{'='*60}")
-        
-        found_new = False
-        attempts = 0
-        max_attempts = 10
-        
-        while not found_new and attempts < max_attempts:
-            attempts += 1
-            print(f"\n🔄 Tentativa {attempts}/{max_attempts}")
-            
-            offers = await scrape_offers_with_selenium(target, max_pages=5)
-            
-            if not offers:
-                print(f"⚠️ Nenhuma oferta encontrada")
-                await asyncio.sleep(3)
-                continue
-            
-            # Filtra ofertas não enviadas
-            new_offers = []
-            for offer in offers:
-                offer_hash = generate_offer_hash(offer['title'], offer['link'])
-                if not is_offer_already_sent(offer_hash):
-                    new_offers.append(offer)
-            
-            print(f"\n📊 Resultado:")
-            print(f"  • Total: {len(offers)}")
-            print(f"  • Duplicadas: {len(offers) - len(new_offers)}")
-            print(f"  • Novas: {len(new_offers)}")
-            
-            if new_offers:
-                found_new = True
-                print(f"\n✅ Encontradas {len(new_offers)} ofertas NOVAS!")
-                
-                # FILTRO: Remove ofertas sem imagem (a oferta é enviada como foto)
-                valid_offers = []
-                for offer in new_offers:
-                    if offer.get('image_url'):
-                        valid_offers.append(offer)
-                    else:
-                        print(f"  🚫 Ignorando: {offer['title'][:50]} (sem imagem)")
-                
-                if not valid_offers:
-                    print(f"  ⚠️ Nenhuma oferta válida (todas sem imagem)")
-                    continue
-                
-                print(f"\n✅ {len(valid_offers)} ofertas válidas (com imagem)")
-                
-                # Envia a primeira válida
-                first_offer = valid_offers[0]
-                print(f"\n📤 Enviando: {first_offer['title'][:50]}...")
-                success = await send_offer_to_group(context, first_offer)
-                
-                if success:
-                    save_sent_offer(first_offer)
-                    total_new_offers += 1
-                    print(f"✅ Enviada e salva!")
-                
-                # Adiciona o restante à fila
-                if len(valid_offers) > 1:
-                    print(f"\n📥 Adicionando {len(valid_offers) - 1} à fila")
-                    for offer in valid_offers[1:]:
-                        add_to_queue(offer)
+
+        new_offers = await collect_new_offers(target)
+
+        if not new_offers:
+            print(f"\n❌ Nenhuma oferta nova nas primeiras {MAX_PAGES} páginas")
+            await asyncio.sleep(3)
+            continue
+
+        print(f"\n✅ Encontradas {len(new_offers)} ofertas NOVAS!")
+
+        # FILTRO: Remove ofertas sem imagem (a oferta é enviada como foto)
+        valid_offers = []
+        for offer in new_offers:
+            if offer.get('image_url'):
+                valid_offers.append(offer)
             else:
-                print(f"⚠️ Todas já foram enviadas")
-                await asyncio.sleep(2)
-        
-        if not found_new:
-            print(f"\n❌ Nenhuma oferta nova após {max_attempts} tentativas")
-        
+                print(f"  🚫 Ignorando: {offer['title'][:50]} (sem imagem)")
+
+        if not valid_offers:
+            print(f"  ⚠️ Nenhuma oferta válida (todas sem imagem)")
+            await asyncio.sleep(3)
+            continue
+
+        print(f"\n✅ {len(valid_offers)} ofertas válidas (com imagem)")
+
+        # Envia a primeira válida
+        first_offer = valid_offers[0]
+        print(f"\n📤 Enviando: {first_offer['title'][:50]}...")
+        success = await send_offer_to_group(context, first_offer)
+
+        if success:
+            save_sent_offer(first_offer)
+            total_new_offers += 1
+            print(f"✅ Enviada e salva!")
+
+        # Adiciona o restante à fila
+        if len(valid_offers) > 1:
+            print(f"\n📥 Adicionando {len(valid_offers) - 1} à fila")
+            for offer in valid_offers[1:]:
+                add_to_queue(offer)
+
         await asyncio.sleep(3)
-    
+
     # Resumo
     queue_counts = get_queue_count()
     print(f"\n" + "="*60)
