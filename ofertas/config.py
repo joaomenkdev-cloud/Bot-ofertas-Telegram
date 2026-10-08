@@ -68,6 +68,8 @@ DB_PATH = Path(os.getenv("DB_PATH") or BASE_DIR / "ofertas.db")
 # ═════════════════════════════════════════════════════════════════════════════
 # Palavras-chave que o bot vai procurar
 # Se o produto tiver alguma dessas palavras, ele será aceito
+# A comparação é por palavra inteira (aceita plural): 'ram' não casa com
+# 'Tramontina', mas 'monitor' casa com 'monitores'
 
 ALLOWED_KEYWORDS = [
     # ── Componentes de PC ──
@@ -126,6 +128,8 @@ ALLOWED_KEYWORDS = [
 ]
 
 # Palavras-chave BLOQUEADAS - produtos que o bot vai IGNORAR
+# Cuidado com termos ambíguos: 'moto' bloquearia o Motorola Moto G e
+# 'bateria' bloquearia power banks, por isso usamos termos mais específicos
 BLOCKED_KEYWORDS = [
     'roupa', 'camisa', 'camiseta', 'calça', 'sapato', 'tênis', 'bermuda',
     'livro', 'revista', 'gibi',
@@ -133,10 +137,10 @@ BLOCKED_KEYWORDS = [
     'perfume', 'cosmético', 'maquiagem', 'shampoo',
     'alimento', 'comida', 'bebida', 'chocolate',
     'geladeira', 'fogão', 'microondas', 'liquidificador',
-    'carro', 'moto', 'peça automotiva', 'pneu',
-    'imóvel', 'apartamento', 'casa',
+    'carro', 'motocicleta', 'capacete', 'peça automotiva', 'pneu',
+    'imóvel', 'apartamento',
     'relógio de pulso', 'joia', 'anel', 'colar',
-    'violão', 'guitarra', 'bateria',
+    'violão', 'guitarra', 'bateria acústica', 'bateria musical',
     'bola de futebol', 'bicicleta', 'esteira',
     'ração', 'coleira',
 ]

@@ -1,10 +1,20 @@
 """Filtro de produtos por palavras-chave."""
 
+import re
+
 from .config import ALLOWED_KEYWORDS, BLOCKED_KEYWORDS
 
 # ═════════════════════════════════════════════════════════════════════════════
 # FUNÇÕES DE FILTRO DE PRODUTOS
 # ═════════════════════════════════════════════════════════════════════════════
+
+def contains_keyword(text, keyword):
+    """
+    Procura a palavra-chave como palavra inteira (com plural opcional).
+    Evita falsos positivos de substring, como 'ram' dentro de 'Tramontina'.
+    """
+    pattern = rf"(?<!\w){re.escape(keyword)}(?:e?s)?(?!\w)"
+    return re.search(pattern, text) is not None
 
 def is_pc_related_product(title):
     """
@@ -15,13 +25,13 @@ def is_pc_related_product(title):
     
     # Primeiro verifica se está bloqueado
     for blocked in BLOCKED_KEYWORDS:
-        if blocked in title_lower:
+        if contains_keyword(title_lower, blocked):
             print(f"  ❌ Bloqueado por: '{blocked}'")
             return False
     
     # Depois verifica se está permitido
     for keyword in ALLOWED_KEYWORDS:
-        if keyword in title_lower:
+        if contains_keyword(title_lower, keyword):
             print(f"  ✅ Permitido por: '{keyword}'")
             return True
     
