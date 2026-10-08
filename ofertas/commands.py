@@ -1,6 +1,7 @@
 """Comandos do bot: /buscar, /status e /config."""
 
 import functools
+from html import escape
 
 from telegram import Update
 from telegram.constants import ParseMode
@@ -42,33 +43,33 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     stats = get_statistics()
     queue_counts = get_queue_count()
     
-    msg = f"🤖 *STATUS DO BOT*\n\n"
-    msg += f"✅ Bot ativo e funcionando\n"
+    msg = "🤖 <b>STATUS DO BOT</b>\n\n"
+    msg += "✅ Bot ativo e funcionando\n"
     msg += f"🔍 Sites monitorados: {len(SCRAPING_TARGETS)}\n\n"
-    
+
     if stats:
-        msg += f"📊 *ESTATÍSTICAS:*\n"
+        msg += "📊 <b>ESTATÍSTICAS:</b>\n"
         msg += f"📦 Total de ofertas: {stats['total']}\n"
         msg += f"📅 Enviadas hoje: {stats['hoje']}\n"
         msg += f"💰 Com afiliado: {stats['com_afiliado']}\n\n"
-    
-    msg += f"📥 *FILA:*\n"
+
+    msg += "📥 <b>FILA:</b>\n"
     total_fila = sum(queue_counts.values())
     msg += f"Total: {total_fila}\n"
     for fonte, qtd in queue_counts.items():
-        msg += f"  • {fonte}: {qtd}\n"
-    
-    await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+        msg += f"  • {escape(fonte)}: {qtd}\n"
+
+    await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
 @admin_only
 async def config_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Comando /config - Mostra configuração de afiliados (uso privado)"""
-    msg = f"⚙️ *CONFIGURAÇÃO DE AFILIADOS*\n\n"
-    
+    msg = "⚙️ <b>CONFIGURAÇÃO DE AFILIADOS</b>\n\n"
+
     for platform in AFFILIATE_CONFIG:
         status = "✅ configurado" if is_affiliate_configured(platform) else "➖ link direto (sem comissão)"
-        msg += f"*{platform.upper()}*: {status}\n"
-    
-    msg += f"\n💡 Para configurar, preencha ML_AFFILIATE_PARAMS / AMAZON_AFFILIATE_TAG no .env"
-    
-    await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+        msg += f"<b>{platform.upper()}</b>: {status}\n"
+
+    msg += "\n💡 Para configurar, preencha <code>ML_AFFILIATE_PARAMS</code> ou <code>AMAZON_AFFILIATE_TAG</code> no .env"
+
+    await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
