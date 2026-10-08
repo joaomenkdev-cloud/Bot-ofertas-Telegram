@@ -7,9 +7,11 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 from .affiliates import create_affiliate_link
 from .filters import is_pc_related_product
@@ -27,38 +29,48 @@ async def iter_listing_pages(target_site, max_pages=5):
     Percorre a listagem página por página, devolvendo as ofertas de cada uma.
     Segue o botão "Seguinte" da própria página: o ML pagina com _Desde_N nas
     listagens e com ?page=N em outras, então montar a URL na mão não funciona.
+    Usa um único Chrome para todas as páginas da busca.
     """
     print(f"🔍 Iniciando scraping em: {target_site['name']}")
     url = target_site['url']
+    driver = None
+    
+    try:
+        driver = await asyncio.to_thread(create_driver)
+        
+        for page_num in range(1, max_pages + 1):
+            print(f"📄 Página {page_num}/{max_pages}")
+            
+            offers, next_url = await asyncio.to_thread(scrape_offers_sync, driver, target_site, url)
+            
+            if offers:
+                print(f"✅ {len(offers)} ofertas extraídas")
+                yield offers
+            else:
+                print(f"⚠️ Nenhuma oferta nesta página")
+            
+            if not next_url:
+                print(f"ℹ️ Não há próxima página")
+                break
+            
+            url = next_url
+            await asyncio.sleep(1)
+    except WebDriverException as e:
+        print(f"❌ Erro no Chrome: {e.msg}")
+    finally:
+        if driver:
+            await asyncio.to_thread(driver.quit)
 
-    for page_num in range(1, max_pages + 1):
-        print(f"📄 Página {page_num}/{max_pages}")
-
-        offers, next_url = await asyncio.to_thread(scrape_offers_sync, target_site, url)
-
-        if offers:
-            print(f"✅ {len(offers)} ofertas extraídas")
-            yield offers
-        else:
-            print(f"⚠️ Nenhuma oferta nesta página")
-
-        if not next_url:
-            print(f"ℹ️ Não há próxima página")
-            break
-
-        url = next_url
-        await asyncio.sleep(2)
-
-def scrape_offers_sync(target_site, url):
+def scrape_offers_sync(driver, target_site, url):
     """Função síncrona de scraping: devolve (ofertas, URL da próxima página)"""
     try:
-        page_source = fetch_page_html(url)
-    except Exception as e:
-        print(f"❌ Erro no scraping: {e}")
-        import traceback
-        traceback.print_exc()
+        page_source = fetch_page_html(driver, url, target_site['selectors']['container'])
+    except BotBlockedError:
         return [], None
-
+    except WebDriverException as e:
+        print(f"❌ Erro ao abrir a página: {e.msg}")
+        return [], None
+    
     offers = parse_listing(page_source, target_site, url)
     print(f"📊 Total extraídas: {len(offers)}")
     return offers, find_next_page_url(page_source, url)
@@ -73,48 +85,52 @@ def find_next_page_url(page_source, url):
         return None
     return urljoin(url, next_link['href'])
 
-def fetch_page_html(url):
-    """Abre a página no Chrome e devolve o HTML renderizado"""
-    driver = None
+class BotBlockedError(WebDriverException):
+    """O site pediu verificação/login e não entregou a página"""
+
+def create_driver():
+    """Abre o Chrome (o Selenium baixa o chromedriver certo sozinho)"""
+    chrome_options = Options()
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+    chrome_options.add_argument('--start-maximized')
+    chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+    
+    # Habilita imagens
+    prefs = {"profile.managed_default_content_settings.images": 1}
+    chrome_options.add_experimental_option("prefs", prefs)
+    
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.set_page_load_timeout(60)
+    return driver
+
+def fetch_page_html(driver, url, container_selector):
+    """Abre a página e devolve o HTML renderizado, com as imagens já carregadas"""
+    print(f"📡 Acessando: {url}")
+    driver.get(url)
+    
+    # O ML às vezes pede login antes de mostrar a listagem (verificação anti-robô)
+    if 'account-verification' in driver.current_url:
+        print("🔒 O Mercado Livre pediu login/verificação de conta e não mostrou a listagem.")
+        print("   O bot não contorna essa barreira. Tente de outra rede/horário ou veja o README.")
+        raise BotBlockedError("verificação de conta do Mercado Livre")
+    
+    # Espera os cards aparecerem em vez de dormir um tempo fixo
     try:
-        # Configurações do Chrome
-        chrome_options = Options()
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-        chrome_options.add_argument('--start-maximized')
-        chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
-        
-        # Habilita imagens
-        prefs = {"profile.managed_default_content_settings.images": 1}
-        chrome_options.add_experimental_option("prefs", prefs)
-        
-        # Inicia o driver
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        
-        print(f"📡 Acessando: {url}")
-        driver.get(url)
-        
-        # Aguarda carregamento
-        time.sleep(6)
-        
-        # Scroll para carregar imagens
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight/4);")
-        time.sleep(2)
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight/2);")
-        time.sleep(2)
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight*3/4);")
-        time.sleep(2)
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(3)
-        driver.execute_script("window.scrollTo(0, 0);")
-        time.sleep(1)
-        
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, container_selector))
+        )
+    except TimeoutException:
+        print("⚠️ Os cards não apareceram a tempo")
         return driver.page_source
-    finally:
-        if driver:
-            driver.quit()
+    
+    # Rola a página aos poucos para o lazy-load das imagens
+    for fraction in ("1/4", "1/2", "3/4", "1"):
+        driver.execute_script(f"window.scrollTo(0, document.body.scrollHeight*{fraction});")
+        time.sleep(1)
+    
+    return driver.page_source
 
 def parse_listing(page_source, target_site, url):
     """Extrai as ofertas do HTML de uma página de listagem"""
