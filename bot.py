@@ -94,33 +94,9 @@ def main():
     # - Finais de semana: 14h-22h
     # ══════════════════════════════════════════════════════════════════════════
     
-    # Envia ofertas da fila com intervalo dinâmico
-    # Calcula automaticamente baseado no horário
-    interval = get_send_interval()
-    application.job_queue.run_repeating(send_queued_offers, interval=interval, first=30)
-    
-    # Atualiza o intervalo a cada hora para se adaptar ao horário
-    async def update_send_interval(context):
-        """Atualiza o intervalo de envio baseado no horário atual"""
-        new_interval = get_send_interval()
-        offers_per_hour = get_offers_per_hour()
-        print(f"\n🔄 Intervalo atualizado: {offers_per_hour} ofertas/hora")
-        
-        # Cancela o job antigo
-        current_jobs = context.job_queue.get_jobs_by_name('send_offers')
-        for job in current_jobs:
-            job.schedule_removal()
-        
-        # Cria novo job com intervalo atualizado
-        context.job_queue.run_repeating(
-            send_queued_offers, 
-            interval=new_interval, 
-            first=1,
-            name='send_offers'
-        )
-    
-    # Atualiza o intervalo a cada hora
-    application.job_queue.run_repeating(update_send_interval, interval=3600, first=3600)
+    # Um único job confere a cada minuto se já passou o intervalo do horário
+    # atual (muda sozinho entre pico e fora de pico) e envia uma oferta.
+    application.job_queue.run_repeating(send_queued_offers, interval=60, first=30)
     
     # Verifica e busca novas ofertas a cada 30 minutos
     application.job_queue.run_repeating(check_and_search_if_needed, interval=1800, first=60)

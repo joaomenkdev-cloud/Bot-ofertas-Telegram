@@ -1,6 +1,7 @@
 """Rotinas agendadas: buscar ofertas, abastecer a fila e enviar."""
 
 import asyncio
+import time
 from contextlib import aclosing
 from datetime import datetime
 
@@ -15,7 +16,7 @@ from .database import (
     is_offer_already_sent,
     save_sent_offer,
 )
-from .scheduling import get_offers_per_hour
+from .scheduling import get_offers_per_hour, get_send_interval
 from .scraper import iter_listing_pages
 from .sender import send_offer_to_group
 
@@ -115,29 +116,41 @@ async def find_and_manage_offers(context: ContextTypes.DEFAULT_TYPE):
     print(f"📥 Na fila: {sum(queue_counts.values())}")
     print(f"="*60)
 
+# Estado do envio: quando saiu a última oferta e de qual fonte tirar a próxima
+_last_send_at = None
+_next_source = 0
+
+def _now():
+    return time.monotonic()
+
 async def send_queued_offers(context: ContextTypes.DEFAULT_TYPE):
     """
-    Envia ofertas da fila com intervalo dinâmico
-    6/hora em horários normais, 12/hora em horários de pico
+    Roda a cada minuto e envia UMA oferta da fila quando o intervalo do
+    horário atual já passou (12/hora nos picos, 6/hora nos demais).
+    As fontes se alternam, para não mandar só TVs ou só celulares em sequência.
     """
-    print(f"\n⏰ Enviando ofertas da fila...")
+    global _last_send_at, _next_source
     
-    offers_per_hour = get_offers_per_hour()
-    print(f"📊 Modo atual: {offers_per_hour} ofertas/hora")
+    interval = get_send_interval()
+    if _last_send_at is not None and _now() - _last_send_at < interval:
+        return
     
-    for target in SCRAPING_TARGETS:
-        offer = get_next_offer_from_queue(target['name'])
-        if offer:
-            # Valida antes de enviar
-            if not offer.get('image_url'):
-                print(f"  🚫 Pulando oferta inválida da fila: {offer['title'][:40]}")
-                continue
-            
-            success = await send_offer_to_group(context, offer)
-            if success:
-                save_sent_offer(offer)
-                print(f"✅ Enviada: {offer['title'][:40]}...")
-            await asyncio.sleep(2)
+    for step in range(len(SCRAPING_TARGETS)):
+        index = (_next_source + step) % len(SCRAPING_TARGETS)
+        offer = get_next_offer_from_queue(SCRAPING_TARGETS[index]['name'])
+        if not offer:
+            continue
+        
+        if not offer.get('image_url'):
+            print(f"  🚫 Pulando oferta sem imagem da fila: {offer['title'][:40]}")
+            continue
+        
+        _next_source = (index + 1) % len(SCRAPING_TARGETS)
+        if await send_offer_to_group(context, offer):
+            save_sent_offer(offer)
+            _last_send_at = _now()
+            print(f"✅ Enviada ({get_offers_per_hour()}/hora): {offer['title'][:40]}...")
+        return
 
 async def check_and_search_if_needed(context: ContextTypes.DEFAULT_TYPE):
     """Verifica fila e busca se necessário"""
