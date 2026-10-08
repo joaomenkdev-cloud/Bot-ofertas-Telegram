@@ -39,7 +39,13 @@ from ofertas.scheduling import get_offers_per_hour, get_send_interval
 
 def main():
     """Função principal - Inicia o bot"""
-    
+
+    # No Windows, com a saída redirecionada (arquivo de log, serviço, agendador),
+    # o Python usa cp1252 e o primeiro print com emoji derruba o bot.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
     print("="*60)
     print("🤖 BOT DE OFERTAS COM SISTEMA DE AFILIADOS")
     print("="*60)
