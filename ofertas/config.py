@@ -1,5 +1,7 @@
 """Configurações do bot: Telegram, afiliados, banco, filtros e sites."""
 
+from pathlib import Path
+
 # ═════════════════════════════════════════════════════════════════════════════
 # SEÇÃO 1: CONFIGURAÇÃO DO BOT DO TELEGRAM
 # ═════════════════════════════════════════════════════════════════════════════
@@ -98,15 +100,10 @@ AFFILIATE_CONFIG = {
 # ═════════════════════════════════════════════════════════════════════════════
 # SEÇÃO 3: CONFIGURAÇÃO DO BANCO DE DADOS
 # ═════════════════════════════════════════════════════════════════════════════
-# O bot usa MySQL para salvar quais ofertas já foram enviadas
-# Assim ele não envia a mesma oferta duas vezes
+# O bot usa um arquivo SQLite para salvar quais ofertas já foram enviadas
+# e a fila de envio. O arquivo é criado automaticamente na primeira execução.
 
-DB_CONFIG = {
-    'host': 'localhost',      # Deixe assim se o MySQL está no mesmo computador
-    'user': 'root',           # Usuário do MySQL
-    'password': 'sua senha aqui',   # ⚠️ MUDE PARA SUA SENHA DO MYSQL
-    'database': 'bot_ofertas' # Nome do banco (será criado automaticamente)
-}
+DB_PATH = Path(__file__).resolve().parent.parent / "ofertas.db"
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SEÇÃO 4: FILTROS DE PRODUTOS

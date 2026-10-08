@@ -10,14 +10,13 @@
     • Sistema de fila inteligente
     
     COMO USAR?
-    1. Instale as bibliotecas: pip install python-telegram-bot selenium webdriver-manager beautifulsoup4 lxml mysql-connector-python
+    1. Instale as bibliotecas: pip install python-telegram-bot selenium webdriver-manager beautifulsoup4 lxml
     2. Configure seus IDs de afiliado na seção "CONFIGURAÇÃO DE AFILIADOS" abaixo
     3. Configure o token do bot e ID do grupo
     4. Execute: python bot.py
     
     IMPORTANTE:
     • Você precisa ter o Google Chrome instalado
-    • Você precisa ter o MySQL instalado e rodando
     • Cadastre-se nos programas de afiliados antes de usar
 ═══════════════════════════════════════════════════════════════════════════════
 """
