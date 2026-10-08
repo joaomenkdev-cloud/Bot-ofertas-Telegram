@@ -3,6 +3,7 @@
 import asyncio
 import re
 import time
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -13,6 +14,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 from .affiliates import create_affiliate_link
 from .filters import is_pc_related_product
 from .prices import calculate_discount, clean_price
+
+# ID da imagem nas URLs do mlstatic, ex.: 900577-MLB97918475120_112025
+ML_IMAGE_ID = re.compile(r"(\d+-[A-Z]+\d+_\d+)-")
 
 # ═════════════════════════════════════════════════════════════════════════════
 # WEB SCRAPING COM SELENIUM
@@ -114,122 +118,154 @@ def parse_listing(page_source, target_site, url):
     """Extrai as ofertas do HTML de uma página de listagem"""
     offers = []
     soup = BeautifulSoup(page_source, 'lxml')
-    
+    selectors = target_site['selectors']
+
     # Busca produtos
-    products = soup.select(target_site['selectors']['container'])
+    products = soup.select(selectors['container'])
     print(f"✅ Encontrados {len(products)} produtos")
-    
+
     # Seletores alternativos se não encontrar
     if len(products) == 0:
         print("🔄 Tentando seletores alternativos...")
         alternative_selectors = [
             'li.ui-search-layout__item',
             'div.ui-search-result',
-            'div.poly-card',
-            'article',
-            'div[class*="item"]',
         ]
         for alt_selector in alternative_selectors:
             products = soup.select(alt_selector)
             if len(products) > 0:
                 print(f"✅ Encontrados {len(products)} com {alt_selector}")
                 break
-    
+
     # Processa cada produto
     for product in products:
         try:
-            # Extrai título
-            title_elem = (product.select_one(target_site['selectors']['title']) or 
-                         product.select_one('h2') or 
-                         product.select_one('h3'))
-            
-            # Extrai preço
-            price_elem = (product.select_one(target_site['selectors']['price']) or
-                         product.select_one('[class*="price"]'))
-            
-            # Extrai link
-            link_elem = (product.select_one(target_site['selectors']['link']) or
-                        product.select_one('a'))
-            
-            if not (title_elem and price_elem and link_elem):
-                continue
-            
-            original_link = link_elem.get('href', '')
-            if not original_link.startswith('http'):
-                from urllib.parse import urljoin
-                original_link = urljoin(url, original_link)
-            
-            # Limpa a URL
-            if 'mercadolivre' in original_link:
-                original_link = original_link.split('#')[0].split('?')[0]
-            
-            title = title_elem.get_text(strip=True)
-            if len(title) < 10:
-                continue
-            
-            # FILTRO: Verifica se é produto aceito
-            print(f"\n🔍 Analisando: {title[:60]}...")
-            if not is_pc_related_product(title):
-                print(f"  🚫 Produto ignorado")
-                continue
-            
-            print(f"  ✅ Produto aceito!")
-            
-            # Busca imagem
-            image_url = None
-            if 'image' in target_site['selectors']:
-                image_elem = product.select_one(target_site['selectors']['image'])
-                if image_elem:
-                    image_url = (image_elem.get('data-src') or 
-                               image_elem.get('src'))
-            
-            if not image_url:
-                all_imgs = product.select('img')
-                for img in all_imgs:
-                    potential_url = img.get('data-src') or img.get('src')
-                    if potential_url and 'http' in potential_url:
-                        if not any(x in potential_url.lower() for x in ['blank', 'placeholder']):
-                            image_url = potential_url
-                            break
-            
-            # Melhora qualidade da imagem (Mercado Livre)
-            if image_url and ('mlstatic.com' in image_url or 'mlu.com' in image_url):
-                image_url = re.sub(r'-[IOP]\.jpg', '-W.jpg', image_url)
-                image_url = image_url.split('?')[0]
-            
-            if image_url:
-                print(f"  🖼️ Imagem encontrada")
-            else:
-                print(f"  ⚠️ Sem imagem")
-            
-            # Cria link de afiliado
-            print(f"  🔗 Criando link de afiliado...")
-            affiliate_link = create_affiliate_link(original_link, target_site.get('platform'))
-            has_affiliate = (affiliate_link != original_link)
-            
-            # Cria objeto da oferta
-            offer = {
-                "title": title[:200],
-                "price": clean_price(price_elem.get_text(strip=True)),
-                "original_price": None,
-                "link": affiliate_link,
-                "original_link": original_link,
-                "source": target_site['name'],
-                "platform": target_site.get('platform', 'desconhecido'),
-                "image_url": image_url,
-                "has_affiliate": has_affiliate
-            }
-            
-            # Busca preço original (se tiver)
-            original_price_elem = product.select_one(target_site['selectors'].get('original_price', ''))
-            if original_price_elem:
-                offer['original_price'] = clean_price(original_price_elem.get_text(strip=True))
-                if offer['original_price'] and offer['original_price'] != offer['price']:
-                    offer['discount'] = calculate_discount(offer['original_price'], offer['price'])
-            
-            offers.append(offer)
-            
-        except Exception:
+            offer = extract_offer(product, target_site, url)
+        except Exception as e:
+            print(f"  ⚠️ Erro ao ler um card de produto: {e}")
             continue
-    
+        if offer:
+            offers.append(offer)
+
     return offers
+
+def extract_offer(product, target_site, url):
+    """Monta a oferta a partir de um card de produto (ou None se não servir)"""
+    selectors = target_site['selectors']
+
+    # Extrai título
+    title_elem = (product.select_one(selectors['title']) or
+                  product.select_one('h2') or
+                  product.select_one('h3'))
+
+    # Extrai link
+    link_elem = (product.select_one(selectors['link']) or
+                 product.select_one('a[href]'))
+
+    # Extrai preço atual (o primeiro preço do card é o antigo, riscado)
+    price_text = read_money(product.select_one(selectors['price']))
+
+    if not (title_elem and link_elem and price_text):
+        return None
+
+    title = title_elem.get_text(strip=True)
+    if len(title) < 10:
+        return None
+
+    original_link = urljoin(url, link_elem.get('href', ''))
+
+    # Anúncios patrocinados apontam para um link de rastreio (click1...)
+    # que não tem o ID do produto; cortar a query quebraria o link
+    if 'click1.mercadolivre' in original_link:
+        print(f"  ⏭️ Anúncio patrocinado ignorado: {title[:50]}")
+        return None
+
+    # Limpa a URL
+    if 'mercadolivre' in original_link:
+        original_link = original_link.split('#')[0].split('?')[0]
+
+    # FILTRO: Verifica se é produto aceito
+    print(f"\n🔍 Analisando: {title[:60]}...")
+    if not is_pc_related_product(title):
+        print(f"  🚫 Produto ignorado")
+        return None
+
+    print(f"  ✅ Produto aceito!")
+
+    image_url = find_image_url(product, selectors)
+    if image_url:
+        print(f"  🖼️ Imagem encontrada")
+    else:
+        print(f"  ⚠️ Sem imagem")
+
+    # Cria link de afiliado (se configurado)
+    affiliate_link = create_affiliate_link(original_link, target_site.get('platform'))
+    has_affiliate = (affiliate_link != original_link)
+
+    # Cria objeto da oferta
+    offer = {
+        "title": title[:200],
+        "price": clean_price(price_text),
+        "original_price": None,
+        "link": affiliate_link,
+        "original_link": original_link,
+        "source": target_site['name'],
+        "platform": target_site.get('platform', 'desconhecido'),
+        "image_url": image_url,
+        "has_affiliate": has_affiliate
+    }
+
+    # Busca preço original (se tiver)
+    original_price_text = read_money(product.select_one(selectors['original_price']))
+    if original_price_text:
+        offer['original_price'] = clean_price(original_price_text)
+        offer['discount'] = calculate_discount(offer['original_price'], offer['price'])
+        if not offer['discount']:
+            offer['original_price'] = None
+
+    return offer
+
+def read_money(amount_elem):
+    """
+    Lê um bloco .andes-money-amount do ML: reais e centavos ficam em spans
+    separados (__fraction e __cents). Devolve texto como "1.299,90".
+    """
+    if amount_elem is None:
+        return None
+    fraction = amount_elem.select_one('.andes-money-amount__fraction')
+    if fraction is None:
+        return None
+    text = fraction.get_text(strip=True)
+    cents = amount_elem.select_one('.andes-money-amount__cents')
+    if cents is not None:
+        text += f",{cents.get_text(strip=True)}"
+    return text
+
+def find_image_url(product, selectors):
+    """Acha a imagem do produto e troca pela versão grande em JPEG"""
+    candidates = []
+    image_elem = product.select_one(selectors.get('image', '')) if selectors.get('image') else None
+    if image_elem:
+        candidates.append(image_elem)
+    candidates.extend(product.select('img'))
+
+    for img in candidates:
+        potential_url = img.get('data-src') or img.get('src')
+        if potential_url and potential_url.startswith('http'):
+            if not any(x in potential_url.lower() for x in ['blank', 'placeholder']):
+                return full_size_ml_image(potential_url)
+    return None
+
+def full_size_ml_image(image_url):
+    """
+    As listagens do ML trazem miniaturas em WebP
+    (D_Q_NP_2X_900577-MLB979..._112025-AB-nome.webp). O mesmo ID serve a
+    versão grande em JPEG (D_NQ_NP_900577-MLB979..._112025-O.jpg), formato
+    que o Telegram aceita sem problema por URL.
+    """
+    if 'mlstatic.com' not in image_url:
+        return image_url
+    match = ML_IMAGE_ID.search(image_url)
+    if not match:
+        return image_url.split('?')[0]
+    return f"https://http2.mlstatic.com/D_NQ_NP_{match.group(1)}-O.jpg"

@@ -151,94 +151,51 @@ BLOCKED_KEYWORDS = [
 # Aqui você configura em quais sites o bot vai buscar
 # Pode adicionar ou remover sites conforme necessário
 
+# Seletores CSS dos cards de produto ("poly-card") das listagens do ML.
+# Se o ML mudar o layout, é aqui que se ajusta (use inspecionar no navegador).
+ML_SELECTORS = {
+    "container": "div.poly-card",
+    "title": ".poly-component__title",
+    "link": "a.poly-component__title, .poly-component__title a",
+    # Os preços apontam para o bloco .andes-money-amount inteiro
+    # (reais em __fraction e centavos em __cents)
+    "price": ".poly-price__current .andes-money-amount",
+    "original_price": ".andes-money-amount--previous",
+    "image": "img.poly-component__picture",
+}
+
 SCRAPING_TARGETS = [
-    # ── MERCADO LIVRE ──
     {
         "name": "Mercado Livre - Informática",
         "platform": "mercadolivre",
         "url": "https://lista.mercadolivre.com.br/informatica/_DisplayType_LF_NoIndex_True",
-        "selectors": {
-            "container": ".ui-search-layout__item",
-            "title": ".ui-search-item__title",
-            "price": ".andes-money-amount__fraction",
-            "original_price": ".andes-money-amount--previous .andes-money-amount__fraction",
-            "link": ".ui-search-link",
-            "image": "img.ui-search-result-image__element"
-        }
+        "selectors": ML_SELECTORS,
     },
     {
         "name": "Mercado Livre - Componentes PC",
         "platform": "mercadolivre",
         "url": "https://lista.mercadolivre.com.br/informatica/componentes-pc/_DisplayType_LF_NoIndex_True",
-        "selectors": {
-            "container": ".ui-search-layout__item",
-            "title": ".ui-search-item__title",
-            "price": ".andes-money-amount__fraction",
-            "original_price": ".andes-money-amount--previous .andes-money-amount__fraction",
-            "link": ".ui-search-link",
-            "image": "img.ui-search-result-image__element"
-        }
+        "selectors": ML_SELECTORS,
     },
     {
         "name": "Mercado Livre - Celulares",
         "platform": "mercadolivre",
         "url": "https://lista.mercadolivre.com.br/celulares-telefones/_DisplayType_LF_NoIndex_True",
-        "selectors": {
-            "container": ".ui-search-layout__item",
-            "title": ".ui-search-item__title",
-            "price": ".andes-money-amount__fraction",
-            "original_price": ".andes-money-amount--previous .andes-money-amount__fraction",
-            "link": ".ui-search-link",
-            "image": "img.ui-search-result-image__element"
-        }
+        "selectors": ML_SELECTORS,
     },
     {
         "name": "Mercado Livre - TVs",
         "platform": "mercadolivre",
         "url": "https://lista.mercadolivre.com.br/eletronicos-audio-video/televisores/_DisplayType_LF_NoIndex_True",
-        "selectors": {
-            "container": ".ui-search-layout__item",
-            "title": ".ui-search-item__title",
-            "price": ".andes-money-amount__fraction",
-            "original_price": ".andes-money-amount--previous .andes-money-amount__fraction",
-            "link": ".ui-search-link",
-            "image": "img.ui-search-result-image__element"
-        }
+        "selectors": ML_SELECTORS,
     },
     {
         "name": "Mercado Livre - Consoles",
         "platform": "mercadolivre",
         "url": "https://lista.mercadolivre.com.br/video-games/_DisplayType_LF_NoIndex_True",
-        "selectors": {
-            "container": ".ui-search-layout__item",
-            "title": ".ui-search-item__title",
-            "price": ".andes-money-amount__fraction",
-            "original_price": ".andes-money-amount--previous .andes-money-amount__fraction",
-            "link": ".ui-search-link",
-            "image": "img.ui-search-result-image__element"
-        }
+        "selectors": ML_SELECTORS,
     },
-    
-    # ══════════════════════════════════════════════════════════════════════════
-    # COMO ADICIONAR MAIS SITES?
-    # ══════════════════════════════════════════════════════════════════════════
-    # Copie o bloco acima e modifique:
-    # 1. "name": Nome que vai aparecer no log
-    # 2. "platform": Nome da plataforma (deve estar em AFFILIATE_CONFIG)
-    # 3. "url": URL da página de busca
-    # 4. "selectors": Classes CSS dos elementos (use inspecionar no navegador)
-    #
-    # EXEMPLO para Shopee:
-    # {
-    #     "name": "Shopee - Eletrônicos",
-    #     "platform": "shopee",
-    #     "url": "https://shopee.com.br/Eletrônicos-cat.11043936",
-    #     "selectors": {
-    #         "container": ".shopee-search-item-result__item",
-    #         "title": ".ie3A+n",
-    #         "price": ".ZEgDH9",
-    #         "link": "a",
-    #         "image": "img"
-    #     }
-    # },
+
+    # Para adicionar outra listagem do Mercado Livre, copie um bloco acima e
+    # troque "name" (aparece no log e na mensagem) e "url" (página de busca).
 ]
