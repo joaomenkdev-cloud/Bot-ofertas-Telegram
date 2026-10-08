@@ -34,82 +34,25 @@ ADMIN_IDS = {
 # ═════════════════════════════════════════════════════════════════════════════
 # SEÇÃO 2: CONFIGURAÇÃO DOS LINKS DE AFILIADO
 # ═════════════════════════════════════════════════════════════════════════════
-# Aqui você configura seus IDs de afiliado de cada plataforma
-# Deixe vazio ("") se não tiver cadastro naquela plataforma
+# Opcional. Sem afiliado configurado, o bot envia o link normal do produto
+# (a oferta sai do mesmo jeito, só não gera comissão).
+#
+# Os parâmetros ficam no .env e são acrescentados ao link de cada produto.
+#
+# MERCADO LIVRE (https://afiliados.mercadolivre.com.br/)
+#   Gere um link em Ferramentas > Gerador de link, abra o link e copie os
+#   parâmetros de rastreamento da URL final (ex.: matt_tool=...&matt_word=...)
+#   para ML_AFFILIATE_PARAMS. Confira numa aba anônima se a comissão é
+#   atribuída antes de confiar no formato.
+#
+# AMAZON (https://associados.amazon.com.br/)
+#   AMAZON_AFFILIATE_TAG=seu-id-20  vira  ?tag=seu-id-20
+
+_amazon_tag = os.getenv("AMAZON_AFFILIATE_TAG", "").strip()
 
 AFFILIATE_CONFIG = {
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # MERCADO LIVRE
-    # Como conseguir? https://afiliados.mercadolivre.com.br/
-    # ─────────────────────────────────────────────────────────────────────────
-    "mercadolivre": {
-        "enabled": True,  # Mude para False se não quiser usar
-        "id": "SEU_ID_AFILIADO_MERCADOLIVRE",  # Exemplo: "joaosilva123"
-        "format": "https://mercadolivre.com/sec/2EhdV6q"  # Formato do link de afiliado
-        # ATENÇÃO: No Mercado Livre, cada afiliado tem um link único
-        # Substitua o link acima pelo SEU link de afiliado do Mercado Livre
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # AMAZON
-    # Como conseguir? https://associados.amazon.com.br/
-    # ─────────────────────────────────────────────────────────────────────────
-    "amazon": {
-        "enabled": True,
-        "id": "SEU_ID_AFILIADO_AMAZON",  # Exemplo: "meublog-20"
-        "format": "tag={affiliate_id}"  # Será adicionado na URL
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # SHOPEE
-    # Como conseguir? https://shopee.com.br/m/shopee-affiliate
-    # ─────────────────────────────────────────────────────────────────────────
-    "shopee": {
-        "enabled": True,
-        "id": "SEU_ID_AFILIADO_SHOPEE",
-        "format": "https://shope.ee/{short_link}?smtt=0.0.9"
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # ALIEXPRESS
-    # Como conseguir? https://portals.aliexpress.com/
-    # ─────────────────────────────────────────────────────────────────────────
-    "aliexpress": {
-        "enabled": True,
-        "id": "SEU_ID_AFILIADO_ALIEXPRESS",
-        "format": "https://s.click.aliexpress.com/e/{affiliate_id}"
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # MAGALU (Magazine Luiza)
-    # Como conseguir? https://afiliados.magazineluiza.com.br/
-    # ─────────────────────────────────────────────────────────────────────────
-    "magalu": {
-        "enabled": True,
-        "id": "SEU_ID_AFILIADO_MAGALU",
-        "format": "parceiro={affiliate_id}"
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # AMERICANAS
-    # Como conseguir? https://afiliados.americanas.com.br/
-    # ─────────────────────────────────────────────────────────────────────────
-    "americanas": {
-        "enabled": True,
-        "id": "SEU_ID_AFILIADO_AMERICANAS",
-        "format": "me={affiliate_id}"
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # SHEIN
-    # Como conseguir? https://br.shein.com/affiliate-program
-    # ─────────────────────────────────────────────────────────────────────────
-    "shein": {
-        "enabled": True,
-        "id": "SEU_ID_AFILIADO_SHEIN",
-        "format": "ref={affiliate_id}"
-    },
+    "mercadolivre": {"params": os.getenv("ML_AFFILIATE_PARAMS", "").strip()},
+    "amazon": {"params": f"tag={_amazon_tag}" if _amazon_tag else ""},
 }
 
 # ═════════════════════════════════════════════════════════════════════════════

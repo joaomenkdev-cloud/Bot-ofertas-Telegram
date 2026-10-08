@@ -66,24 +66,19 @@ async def find_and_manage_offers(context: ContextTypes.DEFAULT_TYPE):
                 found_new = True
                 print(f"\n✅ Encontradas {len(new_offers)} ofertas NOVAS!")
                 
-                # FILTRO: Remove ofertas sem afiliado ou sem imagem
+                # FILTRO: Remove ofertas sem imagem (a oferta é enviada como foto)
                 valid_offers = []
                 for offer in new_offers:
-                    if offer.get('has_affiliate') and offer.get('image_url'):
+                    if offer.get('image_url'):
                         valid_offers.append(offer)
                     else:
-                        reasons = []
-                        if not offer.get('has_affiliate'):
-                            reasons.append("sem afiliado")
-                        if not offer.get('image_url'):
-                            reasons.append("sem imagem")
-                        print(f"  🚫 Ignorando: {offer['title'][:50]} ({', '.join(reasons)})")
+                        print(f"  🚫 Ignorando: {offer['title'][:50]} (sem imagem)")
                 
                 if not valid_offers:
-                    print(f"  ⚠️ Nenhuma oferta válida (todas sem afiliado/imagem)")
+                    print(f"  ⚠️ Nenhuma oferta válida (todas sem imagem)")
                     continue
                 
-                print(f"\n✅ {len(valid_offers)} ofertas válidas (com afiliado E imagem)")
+                print(f"\n✅ {len(valid_offers)} ofertas válidas (com imagem)")
                 
                 # Envia a primeira válida
                 first_offer = valid_offers[0]
@@ -132,7 +127,7 @@ async def send_queued_offers(context: ContextTypes.DEFAULT_TYPE):
         offer = get_next_offer_from_queue(target['name'])
         if offer:
             # Valida antes de enviar
-            if not offer.get('has_affiliate') or not offer.get('image_url'):
+            if not offer.get('image_url'):
                 print(f"  🚫 Pulando oferta inválida da fila: {offer['title'][:40]}")
                 continue
             

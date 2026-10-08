@@ -14,11 +14,7 @@ from .config import GROUP_CHAT_ID
 async def send_offer_to_group(context: ContextTypes.DEFAULT_TYPE, offer):
     """Envia oferta para o grupo do Telegram"""
     
-    # ⚠️ VALIDAÇÃO: Só envia se tiver link de afiliado E imagem
-    if not offer.get('has_affiliate'):
-        print(f"  ❌ BLOQUEADO: Sem link de afiliado - {offer['title'][:50]}...")
-        return False
-    
+    # ⚠️ VALIDAÇÃO: a oferta é enviada como foto, então precisa de imagem
     if not offer.get('image_url'):
         print(f"  ❌ BLOQUEADO: Sem imagem - {offer['title'][:50]}...")
         return False

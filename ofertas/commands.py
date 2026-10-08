@@ -7,6 +7,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from .config import ADMIN_IDS, AFFILIATE_CONFIG, SCRAPING_TARGETS
+from .affiliates import is_affiliate_configured
 from .database import get_queue_count, get_statistics
 from .jobs import find_and_manage_offers
 
@@ -64,14 +65,10 @@ async def config_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Comando /config - Mostra configuração de afiliados (uso privado)"""
     msg = f"⚙️ *CONFIGURAÇÃO DE AFILIADOS*\n\n"
     
-    for platform, config in AFFILIATE_CONFIG.items():
-        status = "✅" if config.get('enabled') else "❌"
-        has_id = "✅" if config.get('id') and not config['id'].startswith('SEU_ID_') else "❌"
-        
-        msg += f"*{platform.upper()}*\n"
-        msg += f"  Status: {status}\n"
-        msg += f"  ID configurado: {has_id}\n\n"
+    for platform in AFFILIATE_CONFIG:
+        status = "✅ configurado" if is_affiliate_configured(platform) else "➖ link direto (sem comissão)"
+        msg += f"*{platform.upper()}*: {status}\n"
     
-    msg += f"\n💡 Para configurar, edite AFFILIATE_CONFIG no código"
+    msg += f"\n💡 Para configurar, preencha ML_AFFILIATE_PARAMS / AMAZON_AFFILIATE_TAG no .env"
     
     await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)

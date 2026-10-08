@@ -3,8 +3,8 @@
     BOT DE TELEGRAM - OFERTAS COM LINKS DE AFILIADO
     
     O QUE ESTE BOT FAZ?
-    • Busca ofertas em várias lojas (Mercado Livre, Amazon, Shopee, etc)
-    • Transforma links normais em links de afiliado (para você ganhar comissão)
+    • Busca ofertas no Mercado Livre (informática, celulares, TVs, games)
+    • Acrescenta seus parâmetros de afiliado ao link, se configurados
     • Envia ofertas automaticamente no seu grupo do Telegram
     • Evita duplicatas (não envia a mesma oferta duas vezes)
     • Sistema de fila inteligente
@@ -12,12 +12,12 @@
     COMO USAR?
     1. Instale as bibliotecas: pip install -r requirements.txt
     2. Copie .env.example para .env e preencha o token do bot e o ID do grupo
-    3. (Opcional) Configure seus IDs de afiliado em ofertas/config.py
+    3. (Opcional) Configure seus parâmetros de afiliado no .env
     4. Execute: python bot.py
     
     IMPORTANTE:
     • Você precisa ter o Google Chrome instalado
-    • Cadastre-se nos programas de afiliados antes de usar
+    • Afiliado é opcional: sem ele, o bot envia o link normal do produto
 ═══════════════════════════════════════════════════════════════════════════════
 """
 
@@ -27,6 +27,7 @@ from datetime import datetime
 from telegram import Update
 from telegram.ext import Application, CommandHandler
 
+from ofertas.affiliates import is_affiliate_configured
 from ofertas.commands import buscar_ofertas_command, config_command, status_command
 from ofertas.config import ADMIN_IDS, AFFILIATE_CONFIG, BOT_TOKEN, GROUP_CHAT_ID
 from ofertas.database import initialize_database
@@ -65,14 +66,11 @@ def main():
     
     # Verifica configuração de afiliados
     print("\n🔍 Verificando configuração de afiliados...")
-    for platform, config in AFFILIATE_CONFIG.items():
-        if config.get('enabled'):
-            if config.get('id') and not config['id'].startswith('SEU_ID_'):
-                print(f"  ✅ {platform.upper()}: Configurado")
-            else:
-                print(f"  ⚠️ {platform.upper()}: ID não configurado!")
+    for platform in AFFILIATE_CONFIG:
+        if is_affiliate_configured(platform):
+            print(f"  ✅ {platform.upper()}: Configurado")
         else:
-            print(f"  ❌ {platform.upper()}: Desabilitado")
+            print(f"  ➖ {platform.upper()}: sem afiliado, envia o link direto do produto")
     
     # Cria a aplicação
     application = Application.builder().token(BOT_TOKEN).build()
