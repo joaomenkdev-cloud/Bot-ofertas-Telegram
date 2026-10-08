@@ -1,26 +1,41 @@
 """Comandos do bot: /buscar, /status e /config."""
 
+import functools
+
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
-from .config import AFFILIATE_CONFIG, SCRAPING_TARGETS
+from .config import ADMIN_IDS, AFFILIATE_CONFIG, SCRAPING_TARGETS
 from .database import get_queue_count, get_statistics
 from .jobs import find_and_manage_offers
 
 # ═════════════════════════════════════════════════════════════════════════════
 # COMANDOS DO BOT (APENAS PARA O DONO)
 # ═════════════════════════════════════════════════════════════════════════════
-# ⚠️ IMPORTANTE: Estes comandos só funcionam para quem tem acesso ao código
-# Não há interface pública - apenas logs no terminal
+# Só respondem a quem está em ADMIN_IDS (arquivo .env). Para qualquer outra
+# pessoa o bot fica em silêncio e só registra a tentativa no terminal.
 
+def admin_only(handler):
+    """Ignora o comando se quem mandou não estiver em ADMIN_IDS"""
+    @functools.wraps(handler)
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user = update.effective_user
+        if user is None or user.id not in ADMIN_IDS:
+            user_id = user.id if user else "desconhecido"
+            print(f"🔒 Comando ignorado: usuário {user_id} não está em ADMIN_IDS")
+            return
+        return await handler(update, context)
+    return wrapper
+
+@admin_only
 async def buscar_ofertas_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Comando /buscar - Busca ofertas manualmente (uso privado)"""
-    # Responde apenas no privado/grupo autorizado
     await update.message.reply_text("🔍 Buscando ofertas...")
     await find_and_manage_offers(context)
     await update.message.reply_text("✅ Busca concluída!")
 
+@admin_only
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Comando /status - Mostra estatísticas (uso privado)"""
     stats = get_statistics()
@@ -44,6 +59,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
 
+@admin_only
 async def config_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Comando /config - Mostra configuração de afiliados (uso privado)"""
     msg = f"⚙️ *CONFIGURAÇÃO DE AFILIADOS*\n\n"

@@ -23,6 +23,14 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 # Como descobrir? Adicione o bot @userinfobot no seu grupo
 GROUP_CHAT_ID = os.getenv("GROUP_CHAT_ID", "").strip()
 
+# IDs numéricos de quem pode usar /buscar, /status e /config, separados por
+# vírgula. Descubra o seu mandando qualquer mensagem para o @userinfobot.
+ADMIN_IDS = {
+    int(user_id)
+    for user_id in os.getenv("ADMIN_IDS", "").replace(" ", "").split(",")
+    if user_id.lstrip("-").isdigit()
+}
+
 # ═════════════════════════════════════════════════════════════════════════════
 # SEÇÃO 2: CONFIGURAÇÃO DOS LINKS DE AFILIADO
 # ═════════════════════════════════════════════════════════════════════════════
