@@ -1,159 +1,4 @@
-# ═════════════════════════════════════════════════════════════════════════════
-# GERADOR DE MENSAGENS MODERNAS E CHAMATIVAS
-# ═════════════════════════════════════════════════════════════════════════════
-
-def generate_attractive_message(offer):
-    """
-    Gera uma mensagem moderna, limpa e chamativa baseada no produto
-    Foca em clareza e destaque de desconto
-    """
-    title = offer['title']
-    price = offer['price']
-    original_price = offer.get('original_price')
-    discount = offer.get('discount')
-    platform = offer.get('platform', 'Loja').title()
-    link = offer['link']
-    
-    title_lower = title.lower()
-    
-    # ══════════════════════════════════════════════════════════════════════════
-    # DETECTA O TIPO DE PRODUTO E CRIA CHAMADA ESPECÍFICA
-    # ══════════════════════════════════════════════════════════════════════════
-    
-    if any(word in title_lower for word in ['processador', 'cpu', 'ryzen', 'core i', 'intel', 'amd']):
-        category_intro = "Processador de alta performance"
-    
-    elif any(word in title_lower for word in ['placa de video', 'placa de vídeo', 'gpu', 'rtx', 'gtx', 'geforce', 'radeon']):
-        category_intro = "Placa de vídeo para jogos e trabalhos pesados"
-    
-    elif any(word in title_lower for word in ['memoria', 'memória', 'ram', 'ddr4', 'ddr5']):
-        category_intro = "Memória RAM para mais velocidade"
-    
-    elif any(word in title_lower for word in ['ssd', 'nvme', 'm.2', 'armazenamento']):
-        category_intro = "Armazenamento rápido e confiável"
-    
-    elif any(word in title_lower for word in ['placa mãe', 'placa-mãe', 'motherboard']):
-        category_intro = "Placa-mãe de qualidade"
-    
-    elif any(word in title_lower for word in ['fonte', 'psu']):
-        category_intro = "Fonte de alimentação certificada"
-    
-    elif any(word in title_lower for word in ['gabinete', 'case']):
-        category_intro = "Gabinete com excelente acabamento"
-    
-    elif any(word in title_lower for word in ['monitor', 'display']):
-        category_intro = "Monitor com ótima qualidade de imagem"
-    
-    elif any(word in title_lower for word in ['teclado', 'keyboard']):
-        category_intro = "Teclado confortável e responsivo"
-    
-    elif any(word in title_lower for word in ['mouse']):
-        category_intro = "Mouse preciso e ergonômico"
-    
-    elif any(word in title_lower for word in ['headset', 'fone', 'headphone']):
-        category_intro = "Audio de qualidade premium"
-    
-    elif any(word in title_lower for word in ['webcam']):
-        category_intro = "Webcam com boa resolução"
-    
-    elif any(word in title_lower for word in ['microfone']):
-        category_intro = "Microfone de alta qualidade"
-    
-    elif any(word in title_lower for word in ['cadeira']):
-        category_intro = "Cadeira ergonômica e confortável"
-    
-    elif any(word in title_lower for word in ['notebook', 'laptop']):
-        category_intro = "Notebook potente e versátil"
-    
-    elif any(word in title_lower for word in ['celular', 'smartphone', 'iphone', 'galaxy', 'xiaomi']):
-        category_intro = "Smartphone de última geração"
-    
-    elif any(word in title_lower for word in ['tablet', 'ipad']):
-        category_intro = "Tablet para trabalho e entretenimento"
-    
-    elif any(word in title_lower for word in ['tv', 'televisão', 'smart tv']):
-        category_intro = "TV com tecnologia avançada"
-    
-    elif any(word in title_lower for word in ['playstation', 'ps5', 'ps4', 'xbox', 'nintendo', 'switch', 'console']):
-        category_intro = "Console para gaming"
-    
-    elif any(word in title_lower for word in ['controle', 'joystick', 'gamepad']):
-        category_intro = "Controle de alta precisão"
-    
-    else:
-        category_intro = "Produto de tecnologia"
-    
-    # ══════════════════════════════════════════════════════════════════════════
-    # MONTA A MENSAGEM DE FORMA MODERNA E LIMPA
-    # ══════════════════════════════════════════════════════════════════════════
-    
-    message = f"*{title}*\n\n"
-    message += f"{category_intro}\n\n"
-    
-    # PREÇOS - Destaque visual para desconto
-    if original_price and discount and original_price != price:
-        # Tem desconto - mostra preço riscado e novo preço
-        message += f"💵 De: ~{original_price}~\n"
-        message += f"🔥 Por: *{price}*\n"
-        message += f"📉 Economia: *{discount}*\n\n"
-    else:
-        # Sem desconto - apenas o preço
-        message += f"💰 *{price}*\n\n"
-    
-    message += f"🛒 [Ver oferta]({link})\n"
-    message += f"📦 Disponível em: {platform}"
-    
-    return message
-
-# ═════════════════════════════════════════════════════════════════════════════
-# SISTEMA DE AGENDAMENTO INTELIGENTE (6 ou 12 ofertas/hora)
-# ═════════════════════════════════════════════════════════════════════════════
-
-def get_offers_per_hour():
-    """
-    Retorna quantas ofertas devem ser enviadas por hora
-    12 ofertas/hora em horários de pico
-    6 ofertas/hora em horários normais
-    """
-    from datetime import datetime
-    now = datetime.now()
-    hour = now.hour
-    weekday = now.weekday()  # 0=segunda, 6=domingo
-    
-    # ── HORÁRIOS DE PICO ──
-    # Manhã: 8h-10h (pessoas chegando no trabalho)
-    # Almoço: 12h-14h (pausa do trabalho)
-    # Noite: 18h-22h (após o trabalho, navegando)
-    
-    peak_hours = [
-        8, 9, 10,      # Manhã
-        12, 13,        # Almoço
-        18, 19, 20, 21 # Noite
-    ]
-    
-    # Final de semana tem mais tempo livre
-    if weekday >= 5:  # Sábado ou Domingo
-        peak_hours.extend([14, 15, 16, 17, 22])
-    
-    if hour in peak_hours:
-        return 12  # 12 ofertas/hora = a cada 5 minutos
-    else:
-        return 6   # 6 ofertas/hora = a cada 10 minutos
-
-def get_send_interval():
-    """
-    Retorna o intervalo em segundos entre envios
-    """
-    offers_per_hour = get_offers_per_hour()
-    # 3600 segundos (1 hora) / quantidade de ofertas
-    interval = 3600 / offers_per_hour
-    return int(interval)
-
-# ═════════════════════════════════════════════════════════════════════════════
-# ENVIO PARA O TELEGRAM (ATUALIZADO)
-# ═════════════════════════════════════════════════════════════════════════════
-
-    """
+"""
 ═══════════════════════════════════════════════════════════════════════════════
     BOT DE TELEGRAM - OFERTAS COM LINKS DE AFILIADO
     
@@ -290,85 +135,6 @@ AFFILIATE_CONFIG = {
     },
 }
 
-# ═════════════════════════════════════════════════════════════════════════════
-# CONFIGURAÇÃO DAS APIs DE AFILIADOS
-# ═════════════════════════════════════════════════════════════════════════════
-
-API_CONFIG = {
-    # ─────────────────────────────────────────────────────────────────────────
-    # MERCADO LIVRE API
-    # Documentação: https://developers.mercadolivre.com.br/
-    # ─────────────────────────────────────────────────────────────────────────
-    "mercadolivre": {
-        "enabled": True,
-        "api_url": "https://api.mercadolibre.com",
-        "client_id": "SEU_CLIENT_ID_ML",  # App ID do Mercado Livre
-        "client_secret": "SEU_CLIENT_SECRET_ML",  # Secret do Mercado Livre
-        "access_token": "",  # Será preenchido automaticamente
-        "refresh_token": "",  # Token para renovar acesso
-        "tag": "SEU_TAG_AFILIADO_ML",  # Ex: "MEUBLOG"
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # AMAZON PRODUCT ADVERTISING API
-    # Documentação: https://webservices.amazon.com/paapi5/documentation/
-    # ─────────────────────────────────────────────────────────────────────────
-    "amazon": {
-        "enabled": True,
-        "api_url": "https://webservices.amazon.com.br/paapi5",
-        "access_key": "SEU_ACCESS_KEY_AMAZON",  # Access Key da PA API
-        "secret_key": "SEU_SECRET_KEY_AMAZON",  # Secret Key da PA API
-        "partner_tag": "SEU_TAG_AMAZON",  # Ex: "meublog-20"
-        "partner_type": "Associates",  # Sempre "Associates" para afiliados
-        "marketplace": "www.amazon.com.br",
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # SHOPEE OPEN PLATFORM API
-    # Documentação: https://open.shopee.com/documents
-    # ─────────────────────────────────────────────────────────────────────────
-    "shopee": {
-        "enabled": True,
-        "api_url": "https://partner.shopeemobile.com/api/v2",
-        "partner_id": 0,  # SEU_PARTNER_ID_SHOPEE (número)
-        "partner_key": "SEU_PARTNER_KEY_SHOPEE",  # Partner Key
-        "shop_id": 0,  # SEU_SHOP_ID (número)
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # ALIEXPRESS AFFILIATE API (Admitad)
-    # Documentação: https://www.admitad.com/pt/webmaster/api/
-    # ─────────────────────────────────────────────────────────────────────────
-    "aliexpress": {
-        "enabled": True,
-        "api_url": "https://api.admitad.com/deeplink/",
-        "client_id": "SEU_CLIENT_ID_ADMITAD",
-        "client_secret": "SEU_CLIENT_SECRET_ADMITAD",
-        "access_token": "",  # Será preenchido automaticamente
-        "campaign_id": "SEU_CAMPAIGN_ID",  # ID da campanha AliExpress
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # MAGALU (Magazine Luiza) - Via Lomadee
-    # Documentação: https://developer.lomadee.com/
-    # ─────────────────────────────────────────────────────────────────────────
-    "magalu": {
-        "enabled": True,
-        "api_url": "https://api.lomadee.com/v3",
-        "app_token": "SEU_APP_TOKEN_LOMADEE",
-        "source_id": "SEU_SOURCE_ID",  # Source ID da Lomadee
-    },
-    
-    # ─────────────────────────────────────────────────────────────────────────
-    # AMERICANAS - Via Lomadee
-    # ─────────────────────────────────────────────────────────────────────────
-    "americanas": {
-        "enabled": True,
-        "api_url": "https://api.lomadee.com/v3",
-        "app_token": "SEU_APP_TOKEN_LOMADEE",
-        "source_id": "SEU_SOURCE_ID",
-    },
-}
 # ═════════════════════════════════════════════════════════════════════════════
 # SEÇÃO 3: CONFIGURAÇÃO DO BANCO DE DADOS
 # ═════════════════════════════════════════════════════════════════════════════
@@ -557,6 +323,50 @@ SCRAPING_TARGETS = [
     #     }
     # },
 ]
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SISTEMA DE AGENDAMENTO INTELIGENTE (6 ou 12 ofertas/hora)
+# ═════════════════════════════════════════════════════════════════════════════
+
+def get_offers_per_hour():
+    """
+    Retorna quantas ofertas devem ser enviadas por hora
+    12 ofertas/hora em horários de pico
+    6 ofertas/hora em horários normais
+    """
+    from datetime import datetime
+    now = datetime.now()
+    hour = now.hour
+    weekday = now.weekday()  # 0=segunda, 6=domingo
+    
+    # ── HORÁRIOS DE PICO ──
+    # Manhã: 8h-10h (pessoas chegando no trabalho)
+    # Almoço: 12h-14h (pausa do trabalho)
+    # Noite: 18h-22h (após o trabalho, navegando)
+    
+    peak_hours = [
+        8, 9, 10,      # Manhã
+        12, 13,        # Almoço
+        18, 19, 20, 21 # Noite
+    ]
+    
+    # Final de semana tem mais tempo livre
+    if weekday >= 5:  # Sábado ou Domingo
+        peak_hours.extend([14, 15, 16, 17, 22])
+    
+    if hour in peak_hours:
+        return 12  # 12 ofertas/hora = a cada 5 minutos
+    else:
+        return 6   # 6 ofertas/hora = a cada 10 minutos
+
+def get_send_interval():
+    """
+    Retorna o intervalo em segundos entre envios
+    """
+    offers_per_hour = get_offers_per_hour()
+    # 3600 segundos (1 hora) / quantidade de ofertas
+    interval = 3600 / offers_per_hour
+    return int(interval)
 
 # ═════════════════════════════════════════════════════════════════════════════
 # FUNÇÕES DO SISTEMA DE AFILIADOS
