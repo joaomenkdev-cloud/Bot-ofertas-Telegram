@@ -1,0 +1,6 @@
+python-telegram-bot[job-queue]>=21.6,<22
+selenium>=4.11
+webdriver-manager>=4.0
+beautifulsoup4>=4.12
+lxml>=5.0
+python-dotenv>=1.0

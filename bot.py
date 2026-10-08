@@ -10,9 +10,9 @@
     • Sistema de fila inteligente
     
     COMO USAR?
-    1. Instale as bibliotecas: pip install python-telegram-bot selenium webdriver-manager beautifulsoup4 lxml
-    2. Configure seus IDs de afiliado na seção "CONFIGURAÇÃO DE AFILIADOS" abaixo
-    3. Configure o token do bot e ID do grupo
+    1. Instale as bibliotecas: pip install -r requirements.txt
+    2. Copie .env.example para .env e preencha o token do bot e o ID do grupo
+    3. (Opcional) Configure seus IDs de afiliado em ofertas/config.py
     4. Execute: python bot.py
     
     IMPORTANTE:
@@ -21,13 +21,14 @@
 ═══════════════════════════════════════════════════════════════════════════════
 """
 
+import sys
 from datetime import datetime
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler
 
 from ofertas.commands import buscar_ofertas_command, config_command, status_command
-from ofertas.config import AFFILIATE_CONFIG, BOT_TOKEN
+from ofertas.config import AFFILIATE_CONFIG, BOT_TOKEN, GROUP_CHAT_ID
 from ofertas.database import initialize_database
 from ofertas.jobs import check_and_search_if_needed, send_queued_offers
 from ofertas.scheduling import get_offers_per_hour, get_send_interval
@@ -45,6 +46,11 @@ def main():
     print(f"📅 Iniciado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
     print("="*60)
     
+    if not BOT_TOKEN or not GROUP_CHAT_ID:
+        print("❌ BOT_TOKEN e GROUP_CHAT_ID precisam estar no arquivo .env")
+        print("💡 Copie o .env.example para .env e preencha os valores")
+        sys.exit(1)
+
     # Inicializa o banco de dados
     initialize_database()
     

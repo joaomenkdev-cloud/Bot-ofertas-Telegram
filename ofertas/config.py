@@ -1,20 +1,27 @@
 """Configurações do bot: Telegram, afiliados, banco, filtros e sites."""
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Lê as variáveis do arquivo .env (copie o .env.example e preencha)
+load_dotenv(BASE_DIR / ".env")
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SEÇÃO 1: CONFIGURAÇÃO DO BOT DO TELEGRAM
 # ═════════════════════════════════════════════════════════════════════════════
-# Onde conseguir?
-# 1. Fale com @BotFather no Telegram
-# 2. Use o comando /newbot
-# 3. Copie o token que ele te enviar
+# Os valores ficam no arquivo .env, que não vai para o git.
+# Nunca escreva o token direto no código.
 
-BOT_TOKEN = ""
+# Token do bot: fale com @BotFather no Telegram e use /newbot
+BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 # ID do seu grupo/canal do Telegram
 # Como descobrir? Adicione o bot @userinfobot no seu grupo
-GROUP_CHAT_ID = ""
+GROUP_CHAT_ID = os.getenv("GROUP_CHAT_ID", "").strip()
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SEÇÃO 2: CONFIGURAÇÃO DOS LINKS DE AFILIADO
@@ -103,7 +110,7 @@ AFFILIATE_CONFIG = {
 # O bot usa um arquivo SQLite para salvar quais ofertas já foram enviadas
 # e a fila de envio. O arquivo é criado automaticamente na primeira execução.
 
-DB_PATH = Path(__file__).resolve().parent.parent / "ofertas.db"
+DB_PATH = Path(os.getenv("DB_PATH") or BASE_DIR / "ofertas.db")
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SEÇÃO 4: FILTROS DE PRODUTOS
