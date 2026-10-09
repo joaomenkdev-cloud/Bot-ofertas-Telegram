@@ -61,6 +61,10 @@ AFFILIATE_CONFIG = {
 # O bot usa um arquivo SQLite para salvar quais ofertas já foram enviadas
 # e a fila de envio. O arquivo é criado automaticamente na primeira execução.
 
+# Perfil do Chrome usado só pelo bot. Rode `python bot.py --login` uma vez, entre
+# na sua conta do Mercado Livre nessa janela e feche: a sessão fica salva aqui.
+CHROME_PROFILE_DIR = Path(os.getenv("CHROME_PROFILE_DIR") or BASE_DIR / ".chrome-profile")
+
 DB_PATH = Path(os.getenv("DB_PATH") or BASE_DIR / "ofertas.db")
 
 # ═════════════════════════════════════════════════════════════════════════════

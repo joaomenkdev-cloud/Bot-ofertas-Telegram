@@ -14,6 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from .affiliates import create_affiliate_link
+from .config import CHROME_PROFILE_DIR
 from .filters import is_pc_related_product
 from .prices import calculate_discount, clean_price
 
@@ -97,6 +98,9 @@ def create_driver():
     chrome_options.add_argument('--start-maximized')
     chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
     
+    # Perfil próprio do bot: guarda o login do Mercado Livre entre as execuções
+    chrome_options.add_argument(f'--user-data-dir={CHROME_PROFILE_DIR}')
+    
     # Habilita imagens
     prefs = {"profile.managed_default_content_settings.images": 1}
     chrome_options.add_experimental_option("prefs", prefs)
@@ -113,7 +117,7 @@ def fetch_page_html(driver, url, container_selector):
     # O ML às vezes pede login antes de mostrar a listagem (verificação anti-robô)
     if 'account-verification' in driver.current_url:
         print("🔒 O Mercado Livre pediu login/verificação de conta e não mostrou a listagem.")
-        print("   O bot não contorna essa barreira. Tente de outra rede/horário ou veja o README.")
+        print("   Rode `python bot.py --login` e entre na sua conta nessa janela (uma vez só).")
         raise BotBlockedError("verificação de conta do Mercado Livre")
     
     # Espera os cards aparecerem em vez de dormir um tempo fixo
@@ -287,3 +291,15 @@ def full_size_ml_image(image_url):
     if not match:
         return image_url.split('?')[0]
     return f"https://http2.mlstatic.com/D_NQ_NP_{match.group(1)}-O.jpg"
+
+def login_interactive():
+    """Abre o Chrome do bot para você entrar na sua conta do Mercado Livre"""
+    driver = create_driver()
+    try:
+        driver.get("https://www.mercadolivre.com.br/")
+        print()
+        print("👉 Entre na sua conta do Mercado Livre na janela que abriu.")
+        input("Quando terminar o login, volte aqui e aperte Enter... ")
+    finally:
+        driver.quit()
+    print(f"✅ Sessão salva em {CHROME_PROFILE_DIR}")

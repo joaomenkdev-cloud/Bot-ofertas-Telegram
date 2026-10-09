@@ -47,6 +47,11 @@ def main():
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
 
+    if "--login" in sys.argv:
+        from ofertas.scraper import login_interactive
+        login_interactive()
+        return
+
     print("="*60)
     print("🤖 BOT DE OFERTAS COM SISTEMA DE AFILIADOS")
     print("="*60)
