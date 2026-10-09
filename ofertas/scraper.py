@@ -1,7 +1,10 @@
 """Scraping das páginas de listagem com Selenium."""
 
 import asyncio
+import os
 import re
+import shutil
+import subprocess
 import time
 from urllib.parse import urljoin
 
@@ -292,14 +295,39 @@ def full_size_ml_image(image_url):
         return image_url.split('?')[0]
     return f"https://http2.mlstatic.com/D_NQ_NP_{match.group(1)}-O.jpg"
 
+def find_chrome():
+    """Procura o executável do Google Chrome"""
+    candidates = [
+        shutil.which("chrome"),
+        shutil.which("google-chrome"),
+        os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    ]
+    return next((c for c in candidates if c and os.path.exists(c)), None)
+
 def login_interactive():
-    """Abre o Chrome do bot para você entrar na sua conta do Mercado Livre"""
-    driver = create_driver()
-    try:
-        driver.get("https://www.mercadolivre.com.br/")
-        print()
-        print("👉 Entre na sua conta do Mercado Livre na janela que abriu.")
-        input("Quando terminar o login, volte aqui e aperte Enter... ")
-    finally:
-        driver.quit()
+    """
+    Abre o Chrome COMUM (sem Selenium) com o perfil do bot, para você entrar
+    na sua conta do Mercado Livre. O Google e outros serviços recusam login
+    em navegadores controlados por automação, então o login não pode ser
+    feito pela janela do Selenium. A sessão fica no perfil e é reaproveitada.
+    """
+    chrome = find_chrome()
+    if not chrome:
+        print("❌ Não encontrei o Google Chrome instalado.")
+        return
+    
+    CHROME_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+    process = subprocess.Popen([
+        chrome,
+        f"--user-data-dir={CHROME_PROFILE_DIR}",
+        "--no-first-run",
+        "https://www.mercadolivre.com.br/",
+    ])
+    print()
+    print("👉 Entre na sua conta do Mercado Livre na janela que abriu.")
+    print("   Depois FECHE a janela do Chrome para salvar a sessão.")
+    process.wait()
     print(f"✅ Sessão salva em {CHROME_PROFILE_DIR}")
