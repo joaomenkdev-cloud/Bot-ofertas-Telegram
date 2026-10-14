@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<!--
+  Listagem sintética do Mercado Livre com a mesma marcação dos cards
+  "poly-card" (capturada em dez/2025). Usada para testar o parser sem rede.
+-->
+<html lang="pt-BR">
+<body>
+<ol class="ui-search-layout ui-search-layout--grid">
+
+  <!-- 1. Produto com desconto, preço acima de mil e centavos -->
+  <li class="ui-search-layout__item">
+    <div class="poly-card poly-card--grid-card">
+      <div class="poly-card__portada">
+        <img class="poly-component__picture" width="150"
+             src="https://http2.mlstatic.com/D_Q_NP_2X_900577-MLB97918475120_112025-AB-notebook-gamer.webp"
+             alt="Notebook Gamer">
+      </div>
+      <div class="poly-card__content">
+        <h3 class="poly-component__title-wrapper">
+          <a class="poly-component__title"
+             href="https://produto.mercadolivre.com.br/MLB-5331114210-notebook-gamer-rtx-4060-16gb-ram-_JM?searchVariation=1#polycard_client=search">Notebook Gamer RTX 4060 16GB RAM SSD 512GB</a>
+        </h3>
+        <div class="poly-component__price">
+          <s class="andes-money-amount andes-money-amount--previous andes-money-amount--cents-comma" role="img">
+            <span class="andes-money-amount__currency-symbol">R$</span>
+            <span class="andes-money-amount__fraction">7.999</span>
+          </s>
+          <div class="poly-price__current">
+            <span class="andes-money-amount andes-money-amount--cents-superscript" role="img">
+              <span class="andes-money-amount__currency-symbol">R$</span>
+              <span class="andes-money-amount__fraction">5.499</span>
+              <span class="andes-visually-hidden">,</span>
+              <span class="andes-money-amount__cents">90</span>
+            </span>
+            <span class="andes-money-amount__discount">31% OFF</span>
+          </div>
+          <span class="poly-price__installments">10x
+            <span class="andes-money-amount poly-phrase-price" role="img">
+              <span class="andes-money-amount__currency-symbol">R$</span>
+              <span class="andes-money-amount__fraction">549</span>
+              <span class="andes-money-amount__cents">99</span>
+            </span> sem juros</span>
+        </div>
+      </div>
+    </div>
+  </li>
+
+  <!-- 2. Produto de catálogo, sem desconto -->
+  <li class="ui-search-layout__item">
+    <div class="poly-card poly-card--grid-card">
+      <div class="poly-card__portada">
+        <img class="poly-component__picture" width="150"
+             src="https://http2.mlstatic.com/D_Q_NP_2X_917764-MLA99509008220_112025-AB.webp"
+             alt="Smartphone">
+      </div>
+      <div class="poly-card__content">
+        <h3 class="poly-component__title-wrapper">
+          <a class="poly-component__title"
+             href="https://www.mercadolivre.com.br/smartphone-motorola-moto-g85-5g-256gb/p/MLB40274355#polycard_client=search">Smartphone Motorola Moto G85 5G 256GB</a>
+        </h3>
+        <div class="poly-component__price">
+          <div class="poly-price__current">
+            <span class="andes-money-amount" role="img">
+              <span class="andes-money-amount__currency-symbol">R$</span>
+              <span class="andes-money-amount__fraction">1.299</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </li>
+
+  <!-- 3. Anúncio patrocinado (link de rastreio click1) -->
+  <li class="ui-search-layout__item">
+    <div class="poly-card poly-card--grid-card">
+      <div class="poly-card__portada">
+        <img class="poly-component__picture" width="150"
+             src="https://http2.mlstatic.com/D_Q_NP_2X_678818-MLB89028758360_082025-AB.webp"
+             alt="Mouse">
+      </div>
+      <div class="poly-card__content">
+        <h3 class="poly-component__title-wrapper">
+          <a class="poly-component__title"
+             href="https://click1.mercadolivre.com.br/mclics/clicks/external/MLB/count?a=9RVkp7qjovvIpNXGKGU62h">Mouse Gamer Sem Fio RGB 16000 DPI</a>
+        </h3>
+        <div class="poly-component__price">
+          <div class="poly-price__current">
+            <span class="andes-money-amount" role="img">
+              <span class="andes-money-amount__currency-symbol">R$</span>
+              <span class="andes-money-amount__fraction">89</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </li>
+
+  <!-- 4. Produto fora do tema (deve ser filtrado) -->
+  <li class="ui-search-layout__item">
+    <div class="poly-card poly-card--grid-card">
+      <div class="poly-card__portada">
+        <img class="poly-component__picture" width="150"
+             src="https://http2.mlstatic.com/D_Q_NP_2X_111111-MLB11111111111_082025-AB.webp"
+             alt="Perfume">
+      </div>
+      <div class="poly-card__content">
+        <h3 class="poly-component__title-wrapper">
+          <a class="poly-component__title"
+             href="https://produto.mercadolivre.com.br/MLB-1111111111-perfume-_JM">Ferofire Atracione Men 50ml Perfume Masculino</a>
+        </h3>
+        <div class="poly-component__price">
+          <div class="poly-price__current">
+            <span class="andes-money-amount" role="img">
+              <span class="andes-money-amount__currency-symbol">R$</span>
+              <span class="andes-money-amount__fraction">89</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </li>
+
+</ol>
+
+<nav class="andes-pagination">
+  <ul>
+    <li class="andes-pagination__button andes-pagination__button--back andes-pagination__button--disabled">
+      <a class="andes-pagination__link" role="button" aria-disabled="true">Anterior</a>
+    </li>
+    <li class="andes-pagination__button andes-pagination__button--current"><span>1</span></li>
+    <li class="andes-pagination__button">
+      <a class="andes-pagination__link" href="https://lista.mercadolivre.com.br/informatica/_Desde_49_DisplayType_LF_NoIndex_True">2</a>
+    </li>
+    <li class="andes-pagination__button andes-pagination__button--next">
+      <a class="andes-pagination__link" href="https://lista.mercadolivre.com.br/informatica/_Desde_49_DisplayType_LF_NoIndex_True" title="Seguinte">Seguinte</a>
+    </li>
+  </ul>
+</nav>
+</body>
+</html>

@@ -44,3 +44,21 @@ Thumbs.db
 
 # VS Code
 .vscode/
+
+# ===============================================
+# Dados gerados pelo bot
+# ===============================================
+# Banco SQLite local (histórico e fila de ofertas)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Capturas de HTML usadas para depurar o scraper
+debug_*.html
+
+# Cache de testes
+.pytest_cache/
+
+# Perfil do Chrome do bot (guarda o login)
+.chrome-profile/
